@@ -14,6 +14,103 @@ Each version entry includes:
 
 ---
 
+## [v4] — 2026-05-05
+
+**File:** `src/gcode_audit_v4_050526.py`
+**Scope:** G91 incremental coordinate interpretation. No new validators
+added in this pass.
+
+### Added
+
+- **`parser_issues` in parse_gcode_lines return value.** New top-level
+  list in the parser output, alongside `lines`. Used to surface issues
+  detected during parsing itself (initially: G91 with no prior position).
+  Always present, possibly empty.
+- **`INCREMENTAL_NO_PRIOR` informational issue.** Emitted (per-axis) when
+  G91 incremental motion is requested but no prior position exists for
+  that axis. The value is treated as absolute for that axis on that line
+  and execution continues — matching the behavior of most real
+  controllers when reset.
+- **Synthetic test suite for G91 behavior.** Seven test cases in
+  `tests/test_g91.py` covering: pure G90, pure G91, G90↔G91 round trip,
+  no-prior-position edge case, mid-line G-code/coordinate ordering, and
+  mode persistence across continuation lines. All pass.
+
+### Changed
+
+- **`_apply_tokens_to_state` rewritten as a two-pass function.** Pass 1
+  applies G-codes and M-codes (so any modal change like G90↔G91 takes
+  effect first). Pass 2 applies coordinate words using the now-current
+  modal state. This means a line like `G91 X10` correctly interprets X10
+  as incremental even though the tokens are in source order.
+- **X/Y/Z interpretation now respects distance mode.** When
+  `state["distance"] == "G91"`, X/Y/Z values are added to the previous
+  position (incremental). When G90 or unset, values replace the previous
+  position (absolute, unchanged from v3). Position state is now
+  trustworthy for programs that use G91.
+
+### Fixed
+
+- **Position state correctness for G91 programs.** Previously the parser
+  always treated coordinates as absolute, producing wrong position state
+  for any program that used G91. Now correct.
+
+### Deferred (carried forward)
+
+- **G92 (set-position) coordinate offsets.** G92 lets a program redefine
+  the current coordinate without moving. Tracking it correctly requires
+  adding a coordinate-offset layer; not addressed in this pass.
+- **Arc geometry validation.** Unchanged from v3 — G2/G3 arcs are
+  tokenized and motion mode is captured, but actual arc paths are not
+  computed.
+- **Configurable safe Z.** Still hardcoded as `Z > 0`. Should become
+  machine-config-driven in a future pass.
+- **Module split.** Deferred to next pass; was originally planned to
+  bundle with G91 work but split into a standalone task per agreed
+  one-task-at-a-time workflow.
+
+### Test Results
+
+**Regression check** — `tests/gcode/test.gcode` (the v3 baseline file):
+
+| Check                | v3 result                            | v4 result                            | Status   |
+|----------------------|--------------------------------------|--------------------------------------|----------|
+| Lines parsed         | 110 (64 code / 39 comment / 7 empty) | 110 (64 code / 39 comment / 7 empty) | ✓ match  |
+| Parser issues        | (n/a — feature is new)               | (none)                               | ✓ clean  |
+| Sequence issues      | (none)                               | (none)                               | ✓ match  |
+| Operations found     | 2                                    | 2                                    | ✓ match  |
+| Depth profile        | -9.5250 (1), -3.3100 (1)             | -9.5250 (1), -3.3100 (1)             | ✓ match  |
+| Spindle/feed issues  | (none)                               | (none)                               | ✓ match  |
+| Final modal state    | G0, G90, G21, G17, M5, F2800, S18000 | G0, G90, G21, G17, M5, F2800, S18000 | ✓ match  |
+
+**Synthetic G91 tests** — `tests/test_g91.py`, all 7 pass:
+
+| # | Test                                            | Status |
+|---|-------------------------------------------------|--------|
+| 1 | Pure G90 absolute mode (baseline)               | ✓ PASS |
+| 2 | G91 with prior position established             | ✓ PASS |
+| 3 | G90 → G91 → G90 round trip                      | ✓ PASS |
+| 4 | G91 active at startup (no prior position)       | ✓ PASS |
+| 5 | G91 + coordinates on same line                  | ✓ PASS |
+| 6 | G90 switch + coordinates on same line           | ✓ PASS |
+| 7 | G91 mode persists across continuation lines     | ✓ PASS |
+
+### Notes
+
+- Parser output shape extended additively. Existing validators that read
+  `parser_output["lines"]` continue to work without changes. Validators
+  may now also read `parser_output.get("parser_issues", [])` if they want
+  to include parser-level findings in their output.
+- The `INCREMENTAL_NO_PRIOR` issue is severity `INFO` because it's not
+  necessarily a bug — some legitimate programs deliberately start in G91
+  to perform machine-relative jogs. Validators that want to escalate this
+  for their machine context can do so via configuration in a later pass.
+- Audit catalog item "Incremental mode without absolute reset" (Tier 2)
+  was previously blocked on G91 interpretation. It is now unblocked but
+  not yet implemented; remains `[ ]` in `AUDIT_CATALOG.md`.
+
+---
+
 ## [v3] — 2026-05-02
 
 **File:** `src/gcode_audit_v3_050226.py`
