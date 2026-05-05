@@ -258,4 +258,4 @@ something concrete to react to. Particularly worth reviewing:
 - **Tier 4 (Structural):** 0 of 5 implemented
 - **Overall:** 4.5 of 28 implemented
 
-*Last updated: 2026-05-02 (alongside v3 release)*
+*Last updated: 2026-05-05 (alongside v5 — test infrastructure)*

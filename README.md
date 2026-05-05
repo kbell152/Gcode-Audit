@@ -22,6 +22,7 @@ Early development. Current capabilities:
 
 See `AUDIT_CATALOG.md` for the full list of planned audits and their status.
 See `CHANGELOG.md` for version-by-version build notes.
+See `docs/TEST_SUMMARY.md` for an overview of what the test suite covers.
 
 ## Repository Layout
 
@@ -30,10 +31,18 @@ gcode-audit/
 ├── README.md                    This file
 ├── CHANGELOG.md                 Version history (canonical, append-only)
 ├── AUDIT_CATALOG.md             Planned audits + implementation status
+├── pytest.ini                   Pytest configuration
+├── requirements-dev.txt         Dev dependencies (pytest)
 ├── src/
-│   ├── gcode_audit_v3_050226.py Current single-file engine (v3)
+│   ├── gcode_audit_v4_050526.py Current single-file engine (v4)
 │   └── validators/              (Future: per-validator modules after split)
 ├── tests/
+│   ├── README.md                How to run / how to add tests
+│   ├── conftest.py              Pytest fixtures and path setup
+│   ├── test_parser.py           Tokenizer / comments / modal state
+│   ├── test_g91.py              G91 incremental coordinate handling
+│   ├── test_validators.py       Each validator (positive + negative cases)
+│   ├── test_regression.py       Pinned outputs against test.gcode
 │   └── gcode/
 │       └── test.gcode           Real-world test program (Fusion/GRBL)
 └── docs/
@@ -44,14 +53,32 @@ gcode-audit/
 
 ```bash
 cd src
-python3 gcode_audit_v3_050226.py
+python3 gcode_audit_v4_050526.py
 ```
 
-By default, it expects `test.gcode` in the working directory. Adjust the path
-in the `__main__` block, or run from `tests/gcode/` with the script copied in.
+By default, it expects `test.gcode` at `tests/gcode/test.gcode` relative
+to the script. The runner prints parser stats, parser issues, final modal
+state, sequence issues, operation groupings, depth profile, and
+spindle/feed issues.
 
-The runner prints parser stats, final modal state, sequence issues, operation
-groupings, depth profile, and spindle/feed issues.
+## Running the Tests
+
+First-time setup (one time per machine):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+```
+
+After that, every time you want to run tests:
+
+```bash
+source .venv/bin/activate    # activate the venv if not already active
+pytest                       # runs the whole suite
+```
+
+See `tests/README.md` for more on running and writing tests.
 
 ## Design Principles
 

@@ -1,0 +1,7 @@
+# Development dependencies for gcode-audit.
+# Install with:  pip install -r requirements-dev.txt
+#
+# Runtime code has no third-party dependencies — only the Python standard
+# library. Everything in this file is for testing or development tooling.
+
+pytest>=8.0

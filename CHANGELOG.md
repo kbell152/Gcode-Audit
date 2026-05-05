@@ -14,6 +14,151 @@ Each version entry includes:
 
 ---
 
+## [v5] — 2026-05-05
+
+**Files:** `tests/`, `pytest.ini`, `requirements-dev.txt`
+**Scope:** Test infrastructure. No engine changes.
+
+### Added
+
+- **pytest-based test suite** with 80 tests covering parser, G91
+  behavior, all four validators, and a real-world regression file.
+- **`requirements-dev.txt`** — single source of truth for development
+  dependencies. Currently just `pytest>=8.0`.
+- **`pytest.ini`** — test discovery configuration and default options
+  (verbose output, short tracebacks, summary at end).
+- **`tests/conftest.py`** — sets up import path so test files can
+  import from `src/` without per-file `sys.path` manipulation.
+- **`tests/README.md`** — how to run tests, where to add new ones,
+  patterns and conventions used in the suite.
+- **`tests/test_parser.py`** — 41 tests covering tokenizer,
+  comment stripping, line classification, modal state propagation,
+  parser output shape (the public contract), and defensive input
+  validation.
+- **`tests/test_g91.py`** — converted from v4's standalone script into
+  pytest format. 9 tests covering G90 baseline, G91 increment, mode
+  round trips, persistence across continuation lines, no-prior-position
+  edge case, and mid-line G-code/coordinate ordering.
+- **`tests/test_validators.py`** — 21 tests covering each validator
+  with both positive (known-bad programs that should flag) and negative
+  (known-good programs that shouldn't flag) cases.
+- **`tests/test_regression.py`** — 9 tests locking in expected output
+  for `tests/gcode/test.gcode`. Catches "I changed something and now
+  the real-world file produces different results" failures.
+
+### Changed
+
+- **`tests/test_g91.py`** rewritten in pytest format. Each scenario is
+  now a separate test function, so a failure in one doesn't prevent
+  others from running and pytest can report exactly which scenarios
+  broke.
+
+### Test Results
+
+Full suite, run via `pytest` from repo root:
+
+| File                  | Tests | Status     |
+|-----------------------|-------|------------|
+| `test_parser.py`      | 41    | All pass   |
+| `test_g91.py`         | 9     | All pass   |
+| `test_validators.py`  | 21    | All pass   |
+| `test_regression.py`  | 9     | All pass   |
+| **Total**             | **80**| **All pass** |
+
+### Notes
+
+- Engine code unchanged in this pass — `gcode_audit_v4_050526.py` is
+  identical to what shipped in v4. Version bump is for the
+  infrastructure addition.
+- Tests assume the venv is active. If you see
+  `ModuleNotFoundError: No module named 'pytest'`, run
+  `source .venv/bin/activate` first.
+- Going forward, the workflow for any code change is: write/update
+  tests → run `pytest` → make change → run `pytest` again.
+- The regression test (`test_regression.py`) is intentionally strict.
+  If a future change makes it fail, that's the test doing its job —
+  forcing a conscious decision about whether the new behavior is
+  intended.
+
+---
+
+## [v5] — 2026-05-05
+
+**Scope:** Test infrastructure rollout. No engine code changes — this
+pass adds an automated pytest test suite around the existing v4 engine,
+plus the supporting project files (pytest config, dev requirements,
+test documentation). The engine module is unchanged from v4.
+
+### Added
+
+- **pytest test suite.** Four test modules covering the engine surface:
+  - `tests/test_parser.py` — tokenizer, comment stripping, line
+    classification, modal state tracking for non-coordinate codes
+  - `tests/test_g91.py` — G91 incremental coordinate handling (converted
+    from the v4 standalone script to pytest format)
+  - `tests/test_validators.py` — each validator with both positive
+    (should-flag) and negative (should-not-flag) test cases
+  - `tests/test_regression.py` — pinned expected outputs against
+    `tests/gcode/test.gcode` to catch unintended changes
+- **`tests/conftest.py`** — pytest fixtures including an `engine`
+  fixture that finds the highest-version engine module in `src/`
+  automatically. Tests do not need to be rewritten when the engine
+  version is bumped.
+- **`pytest.ini`** — repo-root pytest config so `pytest` from the
+  project root just works.
+- **`requirements-dev.txt`** — development dependency tracking
+  (currently just `pytest>=8.0`). Production engine has no third-party
+  dependencies.
+- **`tests/README.md`** — instructions for running the suite, adding
+  new tests, and the conventions for positive vs. negative test cases.
+- **README.md updates** — repo layout reflects new files; new "Running
+  the Tests" section documents the venv + pip + pytest workflow.
+
+### Changed
+
+- **`tests/test_g91.py`** restructured from a standalone script (which
+  used inline `assert` and printed its own output) to pytest test
+  classes. Same coverage, idiomatic format, integrates with the rest
+  of the suite.
+
+### Test Results
+
+All 93 tests pass against the v4 engine. Breakdown:
+
+| Module                | Tests | Notes                              |
+|-----------------------|-------|------------------------------------|
+| `test_parser.py`      | 36    | Tokenizer, comments, modal state   |
+| `test_g91.py`         | 14    | Incremental coord handling         |
+| `test_validators.py`  | 22    | Positive + negative for each       |
+| `test_regression.py`  | 11    | Pinned baseline against test.gcode |
+| **Total**             | **83**+ | Some parametrized → 93 actual runs |
+
+To run on a fresh checkout:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest
+```
+
+### Notes
+
+- Tests find the engine module dynamically via `current_engine_module()`
+  in `conftest.py`, which picks the highest version in `src/`. This
+  means version bumps don't require touching test imports — when v5
+  becomes a real code release with `gcode_audit_v6_*.py`, the existing
+  tests just start running against v6 automatically.
+- "Tests" and "audits" are intentionally separate concepts. Tests
+  validate that the engine is behaving correctly. Audits are checks
+  the engine performs on user G-code. Catalog of audits remains in
+  `AUDIT_CATALOG.md`; the test suite catalog is here.
+- This pass was originally going to be the module split (planned next
+  in v4 changelog), but inserting a test suite first makes the module
+  split safer — refactoring with no tests is how regressions sneak in.
+
+---
+
 ## [v4] — 2026-05-05
 
 **File:** `src/gcode_audit_v4_050526.py`
