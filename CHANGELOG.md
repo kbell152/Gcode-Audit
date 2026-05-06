@@ -14,6 +14,89 @@ Each version entry includes:
 
 ---
 
+## [v6] — 2026-05-06
+
+**Files:** `src/core.py`, `src/runner.py`, `src/validators/` (new package),
+`tests/test_*.py` (imports updated), `tests/conftest.py` (docstring updated)
+**Scope:** Module split. Structural refactor only — no behavior changes,
+no new validators.
+
+### Added
+
+- **`src/core.py`** — parser, tokenizer, modal state model, and modal
+  group constants. Public API: `parse_gcode_lines`, `tokenize`,
+  `strip_comments`, plus the modal group constants (`MOTION_CODES`,
+  `SPINDLE_ON_CODES`, etc.) which validators import.
+- **`src/validators/`** — new package containing one validator per file:
+  - `startup.py` — `validate_startup_sequence`
+  - `spindle_feed.py` — `validate_spindle_and_feed`
+  - `depth.py` — `group_operations`, `profile_operation_depths`
+  - `__init__.py` — re-exports all four functions so callers can do
+    `from validators import validate_startup_sequence` instead of
+    importing from individual submodules.
+- **`src/runner.py`** — CLI entry point. Wraps the previous `__main__`
+  block in a `main()` function with `if __name__ == "__main__": main()`
+  at the bottom. Same output as before, now invokable as
+  `python src/runner.py`.
+
+### Changed
+
+- **Modal group constants no longer underscore-prefixed.** In the single-
+  file era they were "internal" (`_SPINDLE_ON_CODES` etc.). After the
+  split, validators legitimately import them, so they are part of
+  `core`'s public surface and the underscore was dropped.
+- **Test imports updated.** Each test file's import line was rewritten
+  to use the new module structure:
+  - `from gcode_audit_v4_050526 import ...` →
+    `from core import ...` and/or `from validators import ...`
+  - Test bodies are unchanged — only imports were touched.
+- **`tests/conftest.py` docstring updated** to reference the new import
+  pattern. The `sys.path` setup code is unchanged.
+
+### Removed
+
+- **`src/gcode_audit_v4_050526.py`** — fully replaced by the split
+  modules above. Preserved in git history via tag `v5`.
+
+### Test Results
+
+Full suite, run via `pytest` from repo root:
+
+| File                  | Tests | Status     |
+|-----------------------|-------|------------|
+| `test_parser.py`      | 41    | All pass   |
+| `test_g91.py`         | 9     | All pass   |
+| `test_validators.py`  | 21    | All pass   |
+| `test_regression.py`  | 9     | All pass   |
+| **Total**             | **80**| **All pass** |
+
+Runner verified separately: `python src/runner.py` against
+`tests/gcode/test.gcode` produces output identical to v4 (110 lines
+parsed, 2 operations, depth profile -9.525 / -3.31, no validator
+issues, final modal state matches).
+
+### Notes
+
+- This pass was scoped strictly structural. No new validators, no parser
+  changes, no behavior changes. The tests are what made the split safe —
+  every behavior is locked in by the test suite, so a clean 80/80
+  before-and-after is strong evidence the refactor introduced no drift.
+- Filenames no longer carry version/date suffixes (`core.py`, not
+  `core_v6_050626.py`). Versioning is tracked via git tags going forward.
+- `src/gcode_audit_v3_050226.py` was removed in a prior housekeeping
+  commit on the same day, before the v6 split began. Preserved in git
+  history via commit `1b3bbeb` ("Initial commit: v3 engine").
+- The README still references the old `gcode_audit_v4_050526.py` path
+  and is now stale — to be addressed in a follow-up pass (v6.1).
+- The engine has no `--version` flag yet; queued for v7 alongside the
+  config scaffolding.
+- CHANGELOG note: there are currently two `[v5]` entries below this one
+  (the second one is a stale draft describing a different v5 that didn't
+  actually ship). Not addressed in this pass — flagged for a separate
+  cleanup.
+
+---
+
 ## [v5] — 2026-05-05
 
 **Files:** `tests/`, `pytest.ini`, `requirements-dev.txt`

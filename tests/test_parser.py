@@ -7,7 +7,7 @@ across all future versions unless we deliberately change the parser
 contract (in which case the tests get updated alongside the change).
 """
 
-from gcode_audit_v4_050526 import parse_gcode_lines, tokenize, strip_comments
+from core import parse_gcode_lines, tokenize, strip_comments
 
 
 # ============================================================

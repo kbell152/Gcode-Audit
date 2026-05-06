@@ -11,7 +11,7 @@ Run from repo root:
     pytest -k g91                    # tests with "g91" in the name
 """
 
-from gcode_audit_v4_050526 import parse_gcode_lines
+from core import parse_gcode_lines
 
 
 # ============================================================

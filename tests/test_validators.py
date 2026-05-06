@@ -10,8 +10,8 @@ Negative cases are just as important as positive ones — they catch
 "oops, the validator now flags everything" regressions.
 """
 
-from gcode_audit_v4_050526 import (
-    parse_gcode_lines,
+from core import parse_gcode_lines
+from validators import (
     validate_startup_sequence,
     group_operations,
     profile_operation_depths,
