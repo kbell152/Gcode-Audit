@@ -14,6 +14,36 @@ Each version entry includes:
 
 ---
 
+## [v6.0.1] — 2026-05-06
+
+**Files:** `.gitignore`, `CHANGELOG.md`
+**Scope:** Cleanup. Remove a build artifact that was inadvertently
+committed in v6 and prevent recurrence.
+
+### Removed
+
+- **`v6-split.zip`** — distribution archive of the v6 split, intended
+  only as a transfer mechanism between development environments. Was
+  picked up by `git add -A` during the v6 commit and should not have
+  been tracked. The v6 tagged snapshot still contains the file; this
+  commit removes it going forward.
+
+### Changed
+
+- **`.gitignore`** — added `*.zip` to the build artifacts section so
+  archives don't get committed again.
+
+### Notes
+
+- v6 itself was already pushed and tagged when the issue was caught,
+  so the fix is forward-only rather than a history rewrite. Anyone
+  checking out the `v6` tag will still get the zip; anyone working
+  from `main` after this commit will not.
+- No engine code changes. Tests not re-run because no code under test
+  was touched.
+
+---
+
 ## [v6] — 2026-05-06
 
 **Files:** `src/core.py`, `src/runner.py`, `src/validators/` (new package),

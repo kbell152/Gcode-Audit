@@ -19,6 +19,7 @@ env/
 # Build artifacts
 build/
 dist/
+*.zip
 
 # Local config / scratch
 *.local
