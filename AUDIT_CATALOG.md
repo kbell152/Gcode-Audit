@@ -233,6 +233,24 @@ As validators multiply, a shared context object readable by all validators
 (rather than each one reading parser_output independently) may be cleaner.
 Defer until we have 5+ validators and an actual pain point to solve.
 
+### Controller dialect support `[?]`
+The engine currently treats G-code as a single dialect — implicitly the
+common subset of GRBL, LinuxCNC, and Fanuc-style controllers. Most
+existing and planned audits work fine at this level because the core
+modal/motion commands are universal. However, modern GRBL forks have
+diverged: **FluidNC** (the GRBL-ESP32 successor) uses a YAML configuration
+file for machine settings rather than `$$` parameters, and supports
+extensions classic GRBL doesn't. **GRBL-HAL** has its own dialect
+extensions for hardware abstraction across MCU families. Both are
+generally supersets of classic GRBL, so programs that pass our current
+audits will run on all three — but as we add audits that depend on
+machine settings (envelope, max feedrate, plunge ratios), we'll need
+to read settings from each format. Even further out, dialect-specific
+commands (FluidNC macros, HAL extensions) may need targeted rules.
+*Not urgent — current audits are dialect-agnostic. Revisit when
+machine-config support is real and we're considering settings-aware
+audits.*
+
 ---
 
 ## Notes for Domain Review
@@ -258,4 +276,4 @@ something concrete to react to. Particularly worth reviewing:
 - **Tier 4 (Structural):** 0 of 5 implemented
 - **Overall:** 4.5 of 28 implemented
 
-*Last updated: 2026-05-05 (alongside v5 — test infrastructure)*
+*Last updated: 2026-05-06 (alongside v6.0.1)*

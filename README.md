@@ -18,7 +18,7 @@ Early development. Current capabilities:
 - Tokenizer handles space-separated and no-space formats, comments, blank lines
 - Code normalization (`G01` → `G1`, `M03` → `M3`, etc.)
 - Three working validators: startup sequence, depth profile, spindle/feed
-- Backward-compatible API across versions
+- Stable parser and validator return shapes across versions
 
 See `AUDIT_CATALOG.md` for the full list of planned audits and their status.
 See `CHANGELOG.md` for version-by-version build notes.
@@ -34,8 +34,13 @@ gcode-audit/
 ├── pytest.ini                   Pytest configuration
 ├── requirements-dev.txt         Dev dependencies (pytest)
 ├── src/
-│   ├── gcode_audit_v4_050526.py Current single-file engine (v4)
-│   └── validators/              (Future: per-validator modules after split)
+│   ├── core.py                  Parser, tokenizer, modal state model
+│   ├── runner.py                CLI entry point
+│   └── validators/              One file per validator, plus __init__.py
+│       ├── __init__.py          Re-exports the public validator API
+│       ├── startup.py           validate_startup_sequence
+│       ├── spindle_feed.py      validate_spindle_and_feed
+│       └── depth.py             group_operations, profile_operation_depths
 ├── tests/
 │   ├── README.md                How to run / how to add tests
 │   ├── conftest.py              Pytest fixtures and path setup
@@ -51,15 +56,15 @@ gcode-audit/
 
 ## Running It
 
+From the repo root:
+
 ```bash
-cd src
-python3 gcode_audit_v4_050526.py
+python3 src/runner.py
 ```
 
-By default, it expects `test.gcode` at `tests/gcode/test.gcode` relative
-to the script. The runner prints parser stats, parser issues, final modal
-state, sequence issues, operation groupings, depth profile, and
-spindle/feed issues.
+By default, it expects `test.gcode` at `tests/gcode/test.gcode`. The runner
+prints parser stats, parser issues, final modal state, sequence issues,
+operation groupings, depth profile, and spindle/feed issues.
 
 ## Running the Tests
 
