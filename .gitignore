@@ -25,3 +25,7 @@ dist/
 *.local
 scratch/
 **/.DS_Store
+
+# Local-only test G-code (real shop programs, not for the public repo)
+tests/gcode/test_*kb.gcode
+
