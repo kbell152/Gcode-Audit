@@ -14,6 +14,96 @@ Each version entry includes:
 
 ---
 
+## [v6.2] — 2026-05-06
+
+**Files:** `src/runner.py`, `CHANGELOG.md`
+**Scope:** CLI enhancement. Allow the runner to audit arbitrary G-code
+files via a command-line argument. No engine changes.
+
+### Added
+
+- **Optional positional argument** to `runner.py` for specifying a
+  G-code file to audit:
+  - `python3 src/runner.py path/to/program.nc` — audit a specific file.
+  - `python3 src/runner.py` (no argument) — falls back to the default
+    `tests/gcode/test.gcode`, behavior identical to v6.1.
+  - `python3 src/runner.py --help` — show usage info.
+- **`Auditing: <path>` header line** at the top of the report output so
+  users can confirm which file was processed.
+- **Clean error handling for missing files** — prints
+  `Error: file not found: <path>` to stderr and exits with code 1
+  rather than producing a Python traceback.
+- **Path normalization** — the displayed path collapses `..` segments
+  (e.g. `src/../tests/gcode/test.gcode` becomes
+  `tests/gcode/test.gcode`) for cleaner output.
+
+### Changed
+
+- **Argument parsing now uses `argparse`** (Python standard library).
+  This gives `--help` for free and provides scaffolding for future
+  flags such as `--version`.
+
+### Test Results
+
+No tests added or modified. The runner is exercised by manual ad-hoc
+invocation; the engine behavior it depends on is already covered by
+the 80-test suite. Verified by:
+- `python3 src/runner.py` with no arguments — output identical to
+  v6.1 except for the new `Auditing:` header line.
+- `python3 src/runner.py --help` — clean usage display.
+- Running with an explicit file path — produces a correct audit report
+  for that file.
+- Running with a missing file path — prints clean error to stderr,
+  exits with code 1.
+
+### Notes
+
+- This is the smallest change that makes the runner usable as an actual
+  diagnostic tool rather than a regression demo. Without this, every
+  ad-hoc audit required editing the runner.
+- Adding `argparse` here means the eventual `--version` flag (queued
+  for v7) is a one-line addition rather than a refactor.
+- This entry is paired with a retroactive v6.1 entry below — see
+  that entry's Notes section for context.
+
+---
+
+## [v6.1] — 2026-05-06
+
+**Files:** `README.md`, `AUDIT_CATALOG.md`
+**Scope:** Documentation pass following the v6 module split. No code
+changes.
+
+### Changed
+
+- **`README.md`** — Repository Layout section updated to reflect the
+  post-v6 `src/` structure (`core.py`, `runner.py`, and the
+  `validators/` package with one file per validator). Running It
+  section updated to use `python3 src/runner.py` from the repo root,
+  replacing the obsolete `cd src && python3 gcode_audit_v4_050526.py`.
+  The "backward-compatible API across versions" line was softened to
+  "Stable parser and validator return shapes across versions" — more
+  precise, since v6 did change import paths even though the parser
+  and validator return shapes were preserved.
+- **`AUDIT_CATALOG.md`** — added a new "Controller dialect support"
+  entry under Cross-Cutting Concerns (`[?]` — under consideration),
+  documenting that the engine currently treats G-code as a single
+  dialect and noting where FluidNC, GRBL-HAL, and classic GRBL
+  diverge. Footer "Last updated" line bumped to `2026-05-06
+  (alongside v6.1)`.
+
+### Notes
+
+- This entry is being added retroactively in the v6.2 commit. v6.1
+  was committed and pushed without a CHANGELOG entry; the gap was
+  caught while preparing v6.2 and corrected here. The `Last updated`
+  line in AUDIT_CATALOG.md still reads `(alongside v6.0.1)` from when
+  it was written — minor inaccuracy preserved rather than rewriting
+  history again. Will read correctly on its next update.
+- No tests run, no engine code touched.
+
+---
+
 ## [v6.0.1] — 2026-05-06
 
 **Files:** `.gitignore`, `CHANGELOG.md`
