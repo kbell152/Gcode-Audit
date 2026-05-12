@@ -14,6 +14,34 @@ Each version entry includes:
 
 ---
 
+## [v6.3.0] - 2026-05-08
+
+### Scope
+Add `--version` flag to runner CLI. Introduces a single source of truth for
+the package version in `src/_version.py`.
+
+### Added
+- `src/_version.py` — module containing `__version__ = "6.3.0"`.
+- `--version` argument to `runner.py`, prints `gcode-audit 6.3.0`.
+
+### Changed
+- `runner.py` imports `__version__` from `_version`.
+- Usage block in `runner.py` docstring updated to mention `--version`.
+
+### Test Results
+- 80/80 tests passing.
+- Manual verification: `--version`, default run, and `--help` all behave as expected.
+
+### Notes
+- No automated test for `--version` itself; argparse's `action="version"` is
+  library code and calls `sys.exit()`, making clean unit testing awkward.
+  Covered by manual verification.
+- Version string format standardized on three-part semver going forward.
+  Git tag for this release is `v6.3.0` to match the version string; earlier
+  tags (`v6.0.1`, `v6.1`, `v6.2`) are left as-is.
+
+---
+
 ## [v6.2] — 2026-05-06
 
 **Files:** `src/runner.py`, `CHANGELOG.md`

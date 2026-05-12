@@ -9,6 +9,7 @@ a summary report.
 Usage:
     python3 src/runner.py                       # uses default test.gcode
     python3 src/runner.py path/to/program.nc    # audits a specific file
+    python3 src/runner.py --version             # show engine version
     python3 src/runner.py --help                # show usage info
 """
 
@@ -16,6 +17,7 @@ import argparse
 import os
 import sys
 
+from _version import __version__
 from core import parse_gcode_lines
 from validators import (
     validate_startup_sequence,
@@ -43,7 +45,12 @@ def main():
         nargs="?",
         default=None,
         help="Path to a G-code file. If omitted, runs against "
-             "tests/gcode/test.gcode.",
+        "tests/gcode/test.gcode.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"gcode-audit {__version__}",
     )
     args = parser.parse_args()
 
@@ -66,7 +73,9 @@ def main():
     n_code = sum(1 for L in parsed["lines"] if L["line_type"] == "CODE")
     n_comment = sum(1 for L in parsed["lines"] if L["line_type"] == "COMMENT")
     n_empty = sum(1 for L in parsed["lines"] if L["line_type"] == "EMPTY")
-    print(f"Parsed {n_total} lines  ({n_code} code, {n_comment} comment, {n_empty} empty)")
+    print(
+        f"Parsed {n_total} lines  ({n_code} code, {n_comment} comment, {n_empty} empty)"
+    )
 
     parser_issues = parsed.get("parser_issues", [])
     print("\n=== PARSER ISSUES ===")
@@ -79,8 +88,20 @@ def main():
     if parsed["lines"]:
         final_state = parsed["lines"][-1]["state"]
         print("\n=== FINAL MODAL STATE ===")
-        for k in ("X", "Y", "Z", "motion", "distance", "units", "plane",
-                  "spindle", "coolant", "feed", "speed", "tool"):
+        for k in (
+            "X",
+            "Y",
+            "Z",
+            "motion",
+            "distance",
+            "units",
+            "plane",
+            "spindle",
+            "coolant",
+            "feed",
+            "speed",
+            "tool",
+        ):
             print(f"  {k:>10} : {final_state.get(k)}")
 
     sequence_issues = validate_startup_sequence(parsed)
