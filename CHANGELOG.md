@@ -14,6 +14,66 @@ Each version entry includes:
 
 ---
 
+## [v7.0.0] - 2026-05-08
+
+### Scope
+Introduces config scaffolding and the rapid-into-material validator —
+the highest-priority Tier 1 audit not yet covered. Migrates the
+startup-sequence validator to read its safe-Z threshold from config.
+
+### Added
+- `src/config.py` — minimal config module with `CLEARANCE_HEIGHT = 0.0`.
+  First named config value in the engine; future thresholds
+  (max_plunge_ratio, max_feed, machine_envelope) will land here.
+- `src/validators/rapid_into_material.py` — new validator detecting two
+  hazards on G0 (rapid) motions:
+    - `RAPID_INTO_MATERIAL` (CRITICAL): G0 ends at Z at or below the
+      clearance height.
+    - `RAPID_BELOW_CLEARANCE` (CRITICAL): G0 with XY motion where the
+      starting Z is at or below clearance (controller path order not
+      guaranteed within a G0 block).
+  Respects modal motion (a bare-coordinate line under modal G0 is still
+  a rapid). Accepts optional `clearance_height` argument that overrides
+  `config.CLEARANCE_HEIGHT`.
+- `tests/test_rapid_into_material.py` — 14 tests covering positive cases
+  (plunge, traverse, combined, exactly-at-clearance, G91 incremental,
+  modal carry-forward), negative cases (clean program, G1 ignored,
+  unknown-Z indeterminate, retract above clearance), and explicit
+  threshold override.
+
+### Changed
+- `src/validators/startup.py` now reads its safe-Z threshold from
+  `config.CLEARANCE_HEIGHT` instead of the hardcoded `Z > 0` heuristic.
+  Behavior with the default `CLEARANCE_HEIGHT = 0.0` is identical to
+  the pre-v7 implementation. Accepts optional `clearance_height`
+  argument for callers that need to override.
+- `src/validators/__init__.py` re-exports `validate_rapid_into_material`.
+- `src/runner.py` runs the new validator and reports under a new
+  `=== RAPID-INTO-MATERIAL ISSUES ===` section.
+- `src/_version.py` bumped to `7.0.0`.
+
+### Test Results
+- 94/94 tests passing (80 prior + 14 new).
+- Regression fixture (`tests/gcode/test.gcode`) runs clean: no new flags
+  introduced by either the new validator or the startup migration.
+
+### Notes
+- Design call on combined-hazard line: a single G0 that both plunges to
+  unsafe Z *and* moves XY (starting from safe Z) fires only
+  `RAPID_INTO_MATERIAL`, not both flags. The plunge message already
+  conveys the underlying hazard; double-flagging would be noise. A G0
+  starting from unsafe Z and moving XY *can* fire both flags when end
+  Z is also unsafe — they describe distinct problems in that case.
+- Traverse-flag rule is strict: any G0 with XY motion where the
+  starting Z is at or below clearance is flagged, since G0 path order
+  (Z-first vs XY-first vs simultaneous) is controller-defined and not
+  guaranteed.
+- `config.py` is intentionally minimal — a plain module of constants,
+  no file loading. Config-file machinery is deferred until there's
+  a second tunable value that justifies it.
+
+---
+
 ## [v6.3.0] - 2026-05-08
 
 ### Scope

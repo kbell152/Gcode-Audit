@@ -2,16 +2,27 @@
 Startup-sequence validator.
 
 Detects cutting motion or XY motion before a "safe Z" height has been
-established. Safe Z is currently defined as Z > 0 — a known assumption
-to be revisited (machine-config-driven) in a later version.
+established. The safe-Z threshold is read from config.CLEARANCE_HEIGHT
+(default 0.0, matching the historical Z > 0 heuristic this validator
+used prior to v7).
+
+Behavior with the default CLEARANCE_HEIGHT of 0.0 is identical to the
+pre-v7 implementation: Z strictly greater than the threshold is safe;
+Z at or below the threshold is treated as a cut.
 """
 
+from config import CLEARANCE_HEIGHT
 
-def validate_startup_sequence(parser_output):
+
+def validate_startup_sequence(parser_output, clearance_height=None):
     """
     Detect cutting motion or XY motion before a safe Z height is
-    established. "Safe Z" is currently defined as Z > 0 — this is a
-    known assumption documented in the project notes.
+    established.
+
+    Args:
+        parser_output: dict returned by core.parse_gcode_lines.
+        clearance_height: optional override for the safe-Z threshold.
+            If None, uses config.CLEARANCE_HEIGHT.
     """
     if not isinstance(parser_output, dict):
         raise ValueError("Invalid parser_output: expected dict")
@@ -19,6 +30,8 @@ def validate_startup_sequence(parser_output):
     lines = parser_output.get("lines")
     if not isinstance(lines, list):
         raise ValueError("Invalid parser_output: 'lines' must be list")
+
+    threshold = CLEARANCE_HEIGHT if clearance_height is None else clearance_height
 
     safe_z_line = None
     first_xy_line = None
@@ -42,7 +55,7 @@ def validate_startup_sequence(parser_output):
         y = state.get("Y")
         z = state.get("Z")
 
-        if safe_z_line is None and z is not None and z > 0:
+        if safe_z_line is None and z is not None and z > threshold:
             safe_z_line = idx
 
         if first_xy_line is None:
@@ -51,7 +64,7 @@ def validate_startup_sequence(parser_output):
             ):
                 first_xy_line = idx
 
-        if first_cut_line is None and z is not None and z <= 0:
+        if first_cut_line is None and z is not None and z <= threshold:
             first_cut_line = idx
 
         prev_x = x if x is not None else prev_x

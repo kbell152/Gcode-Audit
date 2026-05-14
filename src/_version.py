@@ -5,4 +5,4 @@ Imported by runner.py for the --version flag. Update this string when
 cutting a new release; the git tag should match.
 """
 
-__version__ = "6.3.0"
+__version__ = "7.0.0"

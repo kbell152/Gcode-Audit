@@ -24,6 +24,7 @@ from validators import (
     group_operations,
     profile_operation_depths,
     validate_spindle_and_feed,
+    validate_rapid_into_material,
 )
 
 
@@ -45,7 +46,7 @@ def main():
         nargs="?",
         default=None,
         help="Path to a G-code file. If omitted, runs against "
-        "tests/gcode/test.gcode.",
+             "tests/gcode/test.gcode.",
     )
     parser.add_argument(
         "--version",
@@ -73,9 +74,7 @@ def main():
     n_code = sum(1 for L in parsed["lines"] if L["line_type"] == "CODE")
     n_comment = sum(1 for L in parsed["lines"] if L["line_type"] == "COMMENT")
     n_empty = sum(1 for L in parsed["lines"] if L["line_type"] == "EMPTY")
-    print(
-        f"Parsed {n_total} lines  ({n_code} code, {n_comment} comment, {n_empty} empty)"
-    )
+    print(f"Parsed {n_total} lines  ({n_code} code, {n_comment} comment, {n_empty} empty)")
 
     parser_issues = parsed.get("parser_issues", [])
     print("\n=== PARSER ISSUES ===")
@@ -88,20 +87,8 @@ def main():
     if parsed["lines"]:
         final_state = parsed["lines"][-1]["state"]
         print("\n=== FINAL MODAL STATE ===")
-        for k in (
-            "X",
-            "Y",
-            "Z",
-            "motion",
-            "distance",
-            "units",
-            "plane",
-            "spindle",
-            "coolant",
-            "feed",
-            "speed",
-            "tool",
-        ):
+        for k in ("X", "Y", "Z", "motion", "distance", "units", "plane",
+                  "spindle", "coolant", "feed", "speed", "tool"):
             print(f"  {k:>10} : {final_state.get(k)}")
 
     sequence_issues = validate_startup_sequence(parsed)
@@ -126,6 +113,13 @@ def main():
     if not spindle_issues:
         print("  (none)")
     for issue in spindle_issues:
+        print(f"  {issue}")
+
+    rapid_issues = validate_rapid_into_material(parsed)
+    print("\n=== RAPID-INTO-MATERIAL ISSUES ===")
+    if not rapid_issues:
+        print("  (none)")
+    for issue in rapid_issues:
         print(f"  {issue}")
 
     print("\n=== ANALYSIS END ===\n")
