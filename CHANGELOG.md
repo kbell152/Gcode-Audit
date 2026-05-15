@@ -3,8 +3,10 @@
 All notable changes to the G-Code Audit Engine are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-This project follows simple integer versioning (v1, v2, v3, ...) for now;
-semantic versioning may be adopted later.
+This project uses three-part semantic versioning (`vMAJOR.MINOR.PATCH`).
+Note that some early git tags (`v5`, `v6`) use shorter forms from before
+this convention was formalized; the CHANGELOG entry headers have been
+retroactively standardized to the three-part form for consistency.
 
 Each version entry includes:
 - **Scope** — one-line summary of what this pass focused on
@@ -102,7 +104,7 @@ the package version in `src/_version.py`.
 
 ---
 
-## [v6.2] — 2026-05-06
+## [v6.2.0] — 2026-05-06
 
 **Files:** `src/runner.py`, `CHANGELOG.md`
 **Scope:** CLI enhancement. Allow the runner to audit arbitrary G-code
@@ -156,7 +158,7 @@ the 80-test suite. Verified by:
 
 ---
 
-## [v6.1] — 2026-05-06
+## [v6.1.0] — 2026-05-06
 
 **Files:** `README.md`, `AUDIT_CATALOG.md`
 **Scope:** Documentation pass following the v6 module split. No code
@@ -222,7 +224,7 @@ committed in v6 and prevent recurrence.
 
 ---
 
-## [v6] — 2026-05-06
+## [v6.0.0] — 2026-05-06
 
 **Files:** `src/core.py`, `src/runner.py`, `src/validators/` (new package),
 `tests/test_*.py` (imports updated), `tests/conftest.py` (docstring updated)
@@ -301,7 +303,7 @@ issues, final modal state matches).
 
 ---
 
-## [v5] — 2026-05-05
+## [v5.0.0] — 2026-05-05
 
 **Files:** `tests/`, `pytest.ini`, `requirements-dev.txt`
 **Scope:** Test infrastructure. No engine changes.
@@ -369,7 +371,7 @@ Full suite, run via `pytest` from repo root:
 
 ---
 
-## [v4] — 2026-05-05
+## [v4.0.0] — 2026-05-05
 
 **File:** `src/gcode_audit_v4_050526.py`
 **Scope:** G91 incremental coordinate interpretation. No new validators
@@ -466,7 +468,7 @@ added in this pass.
 
 ---
 
-## [v3] — 2026-05-02
+## [v3.0.0] — 2026-05-02
 
 **File:** `src/gcode_audit_v3_050226.py`
 **Scope:** Parser expansion + tokenizer rewrite + M03/M3 normalization fix.
@@ -563,7 +565,7 @@ post-processor output, 110 lines, 2 cutting operations):
 
 ---
 
-## [v2] — 2026-05-01
+## [v2.0.0] — 2026-05-01
 
 **File:** `g-code_verification_v1.py` (milestone 050126_v2, "HARDENED")
 **Scope:** Add spindle/feed validation; harden parser against real-world input.
