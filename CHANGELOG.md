@@ -298,10 +298,6 @@ issues, final modal state matches).
   and is now stale — to be addressed in a follow-up pass (v6.1).
 - The engine has no `--version` flag yet; queued for v7 alongside the
   config scaffolding.
-- CHANGELOG note: there are currently two `[v5]` entries below this one
-  (the second one is a stale draft describing a different v5 that didn't
-  actually ship). Not addressed in this pass — flagged for a separate
-  cleanup.
 
 ---
 
@@ -370,83 +366,6 @@ Full suite, run via `pytest` from repo root:
   If a future change makes it fail, that's the test doing its job —
   forcing a conscious decision about whether the new behavior is
   intended.
-
----
-
-## [v5] — 2026-05-05
-
-**Scope:** Test infrastructure rollout. No engine code changes — this
-pass adds an automated pytest test suite around the existing v4 engine,
-plus the supporting project files (pytest config, dev requirements,
-test documentation). The engine module is unchanged from v4.
-
-### Added
-
-- **pytest test suite.** Four test modules covering the engine surface:
-  - `tests/test_parser.py` — tokenizer, comment stripping, line
-    classification, modal state tracking for non-coordinate codes
-  - `tests/test_g91.py` — G91 incremental coordinate handling (converted
-    from the v4 standalone script to pytest format)
-  - `tests/test_validators.py` — each validator with both positive
-    (should-flag) and negative (should-not-flag) test cases
-  - `tests/test_regression.py` — pinned expected outputs against
-    `tests/gcode/test.gcode` to catch unintended changes
-- **`tests/conftest.py`** — pytest fixtures including an `engine`
-  fixture that finds the highest-version engine module in `src/`
-  automatically. Tests do not need to be rewritten when the engine
-  version is bumped.
-- **`pytest.ini`** — repo-root pytest config so `pytest` from the
-  project root just works.
-- **`requirements-dev.txt`** — development dependency tracking
-  (currently just `pytest>=8.0`). Production engine has no third-party
-  dependencies.
-- **`tests/README.md`** — instructions for running the suite, adding
-  new tests, and the conventions for positive vs. negative test cases.
-- **README.md updates** — repo layout reflects new files; new "Running
-  the Tests" section documents the venv + pip + pytest workflow.
-
-### Changed
-
-- **`tests/test_g91.py`** restructured from a standalone script (which
-  used inline `assert` and printed its own output) to pytest test
-  classes. Same coverage, idiomatic format, integrates with the rest
-  of the suite.
-
-### Test Results
-
-All 93 tests pass against the v4 engine. Breakdown:
-
-| Module                | Tests | Notes                              |
-|-----------------------|-------|------------------------------------|
-| `test_parser.py`      | 36    | Tokenizer, comments, modal state   |
-| `test_g91.py`         | 14    | Incremental coord handling         |
-| `test_validators.py`  | 22    | Positive + negative for each       |
-| `test_regression.py`  | 11    | Pinned baseline against test.gcode |
-| **Total**             | **83**+ | Some parametrized → 93 actual runs |
-
-To run on a fresh checkout:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-pytest
-```
-
-### Notes
-
-- Tests find the engine module dynamically via `current_engine_module()`
-  in `conftest.py`, which picks the highest version in `src/`. This
-  means version bumps don't require touching test imports — when v5
-  becomes a real code release with `gcode_audit_v6_*.py`, the existing
-  tests just start running against v6 automatically.
-- "Tests" and "audits" are intentionally separate concepts. Tests
-  validate that the engine is behaving correctly. Audits are checks
-  the engine performs on user G-code. Catalog of audits remains in
-  `AUDIT_CATALOG.md`; the test suite catalog is here.
-- This pass was originally going to be the module split (planned next
-  in v4 changelog), but inserting a test suite first makes the module
-  split safer — refactoring with no tests is how regressions sneak in.
 
 ---
 
